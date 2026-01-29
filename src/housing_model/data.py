@@ -53,6 +53,7 @@ def stratified_split(
     X_test = test_df.drop(columns = [target])
     y_test = test_df[target].copy()
 
+    # print evez etmek olar ama bu daha rahatdi. uzerinde islemek daha rahatdi. cloud falan
     logger.info("Split sizes: train=%d test=%d", len(train_df), len(test_df))
 
     return X_train, X_test, y_train, y_test
