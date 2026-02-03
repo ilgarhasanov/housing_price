@@ -46,3 +46,57 @@ async def lifespan(app: FastAPI):
 
 
     logger.info("Service shutting down.")
+
+app = FastAPI(title="Housing Price Modle", version="0.1.0", lifespan=lifepsan)
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
+@app.get("/meta")
+def meta(request: Request):
+    serve_cfg = request.app.state.serve_cfg
+    pred = request.app.state.predictor
+    return{
+        "model_path": serve_cfg["artifacts"]["model_path"],
+        "training_profile_path" : serve_cfg["artifacts"].get("training"),
+        "training_profile_loaded": bool(pred.training_profile),
+        "allow_extra_columns": pred.allow_extra_columns,
+        "strict_categories": pred.strict_categories,
+        "required_columns": REQUIRED_COLUMNS,
+    }
+
+@app.post("/predict", response_model=PredictResponse)
+def product(req: PredcitRequest, request: Request):
+    pred = request.app.state.predictor
+
+    t0 = time.time()
+    try:
+        df = pd.DataFrame(req.records)
+
+        df = validate_dataframe(
+            df,
+            allow_extra_columns=pred.alow_extra_columns,
+            strict_categories=pred.strict_categories,
+            require_non_empty=True,
+        )
+        df = df[REQUIRED_COLUMNS]
+
+        result = pred.predict_df(df)
+
+    except SchemaError as e:
+        raise HTTPException(status_code=422,
+                            detail={"error": str(e), "details":e.details})
+    
+    except Exception:
+        logger.exception("Prediction failes")
+        raise HTTPException(status_code=500, detail="Internal error")
+    
+    latency_ms = (time.time() - t0) * 1000.0
+    logger.info("predict_ok rows=%d latency_ms=%.2f", len(req.records), latency_ms)
+
+    return PredictResponse(
+        predidctions=result["predictions"],
+        drift=result.get("drift"),
+        latency_ms=latency_ms,
+    )

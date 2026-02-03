@@ -1,0 +1,8 @@
+housing-train --config configs/train.yaml
+
+uvicron housing_model.service:app -=host 0.0.0.0 --port 8000
+pip install uvicron
+
+screenshot
+
+37 deq POSTMAN
