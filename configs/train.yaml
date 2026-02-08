@@ -17,7 +17,7 @@ grid:
   cv: 3
   scoring: neg_mean_squared_error
   param_grid:
-    randomforestregressor__n_estimator: [100,150,300]
+    randomforestregressor__n_estimators: [100,150,300]
     randomforestregressor__max_depth: [10,20,null]
 
 output:

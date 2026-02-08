@@ -1,0 +1,5 @@
+train.yaml - data, model ve s default tiplerin verir
+config.py - what to use: path, hypterparm and so on data, model, output ve s tiplerin yazir
+cli.py - data,model ve s configden goturur. default train.yamldir ve ya istifadeci onu deyisdire de biler
+
+data.py - datani split edir: return X_train, X_test, y_train, y_test

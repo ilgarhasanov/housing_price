@@ -7,7 +7,9 @@ dependencies = [
   "numpy",
   "scikit-learn",
   "pyyaml",
-  "joblib"
+  "joblib",
+  "fastapi",
+  "uvicorn[standard]"
 ]
 
 [project.scripts]

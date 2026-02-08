@@ -3,8 +3,9 @@ service:
   port: 8000
 
 
+# Use the registry's active model (set by the training CLI); do not use best_model.joblib
 artifacts:
-  model_path: artifacts/models/best_model.joblib
+  model_path: artifacts/models/registry/active
   training_profile_path: artifacts/reports/training_profile.json
 
 behavior:

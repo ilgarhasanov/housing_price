@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import pandas as pd
 
 #gozlediyim reqem stutunlari/ yoxdursa problemdir
-REQURIED_NUMERIC = [
+REQUIRED_NUMERIC = [
     'longitude',
     'latitude',
     'housing_median_age',
@@ -15,9 +15,9 @@ REQURIED_NUMERIC = [
 ]
 
 
-REQURIED_CATEGORICAL = ['ocean_proximity']
+REQUIRED_CATEGORICAL = ['ocean_proximity']
 
-REQURIED_COLUMNS = REQURIED_NUMERIC + REQURIED_CATEGORICAL
+REQUIRED_COLUMNS = REQUIRED_NUMERIC + REQUIRED_CATEGORICAL
 
 ALLOWED_OCEAN_PROXIMITY = [
     '<1H OCEAN',
@@ -44,8 +44,8 @@ def _missing_and_extra_columns(df: pd.DataFrame) -> Tuple[List[str]]:
     # butun sutunlari gotur
     cols = set(df.columns)
     # eger columns req yoxdursa
-    missing = [c for c in REQURIED_COLUMNS if c not in cols]
-    extra = [c for c in df.columns if c not in set(REQURIED_COLUMNS)]
+    missing = [c for c in REQUIRED_COLUMNS if c not in cols]
+    extra = [c for c in df.columns if c not in set(REQUIRED_COLUMNS)]
     return missing, extra
 
 def validate_dataframe(
@@ -69,13 +69,13 @@ def validate_dataframe(
     
     out = df.copy()
 
-    for c  in REQURIED_NUMERIC:
+    for c  in REQUIRED_NUMERIC:
         # numierce cevir, cevirmese nanla evez et.
         out[c] = pd.to_numeric(out[c], errors='coerce')
 
     bad_numeric = []
     # pis gonderieln numericler. eger null varsa liste elave et
-    for c in REQURIED_NUMERIC:
+    for c in REQUIRED_NUMERIC:
         if out[c].isna().all():
             bad_numeric.append(c)
     if bad_numeric:
@@ -84,7 +84,8 @@ def validate_dataframe(
     
     if strict_categories:
         # eger stric cat dogurudursa qiymeti sort et. 
-        unknown = sorted(set(out['ocean_proximity'].dropna().unique()) - ALLOWED_OCEAN_PROXIMITY)
+        unknown = sorted(set(out['ocean_proximity'].dropna().unique()) - set(ALLOWED_OCEAN_PROXIMITY))
         if unknown:
             raise SchemaError('Unknown ocean_proximity category.', {'unknown': unknown})
-   
+
+    return out

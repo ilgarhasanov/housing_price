@@ -14,7 +14,7 @@ from .schema import REQUIRED_COLUMNS, SchemaError, validate_dataframe
 
 logger = logging.getLogger(__name__)
 
-class PredcitRequest(BaseModel):
+class PredictRequest(BaseModel):
     records: List[Dict[str,Any]] = Field(..., min_length=1) # en azi 1 meluamt olmali, ... melumat qayidacaq demekdi
 
 class PredictResponse(BaseModel):
@@ -23,14 +23,14 @@ class PredictResponse(BaseModel):
     latency_ms: float
 
 def _load_serve_cfg() -> dict:
-    return yaml.safe_load(Path("confgis/serve.yaml").read_text(encoding="utf-8"))
+    return yaml.safe_load(Path("configs/serve.yaml").read_text(encoding="utf-8"))
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     serve_cfg = _load_serve_cfg() #yukle
 
-    model_path = serve_cfg["artifactts"]["model_path"]
-    profile_path = serve_cfg["artifactts"].get("training_profile_path")
+    model_path = serve_cfg["artifacts"]["model_path"]
+    profile_path = serve_cfg["artifacts"].get("training_profile_path")
 
     pred = load_predictor(model_path = model_path, training_profile_path=profile_path)
     pred.allow_extra_columns = bool(serve_cfg["behavior"].get("allow_extra_columns",False))
@@ -47,7 +47,7 @@ async def lifespan(app: FastAPI):
 
     logger.info("Service shutting down.")
 
-app = FastAPI(title="Housing Price Modle", version="0.1.0", lifespan=lifepsan)
+app = FastAPI(title="Housing Price Model", version="0.1.0", lifespan=lifespan)
 
 @app.get("/health")
 def health():
@@ -59,7 +59,7 @@ def meta(request: Request):
     pred = request.app.state.predictor
     return{
         "model_path": serve_cfg["artifacts"]["model_path"],
-        "training_profile_path" : serve_cfg["artifacts"].get("training"),
+        "training_profile_path": serve_cfg["artifacts"].get("training_profile_path"),
         "training_profile_loaded": bool(pred.training_profile),
         "allow_extra_columns": pred.allow_extra_columns,
         "strict_categories": pred.strict_categories,
@@ -67,7 +67,7 @@ def meta(request: Request):
     }
 
 @app.post("/predict", response_model=PredictResponse)
-def product(req: PredcitRequest, request: Request):
+def predict(req: PredictRequest, request: Request):
     pred = request.app.state.predictor
 
     t0 = time.time()
@@ -76,7 +76,7 @@ def product(req: PredcitRequest, request: Request):
 
         df = validate_dataframe(
             df,
-            allow_extra_columns=pred.alow_extra_columns,
+            allow_extra_columns=pred.allow_extra_columns,
             strict_categories=pred.strict_categories,
             require_non_empty=True,
         )
@@ -89,14 +89,14 @@ def product(req: PredcitRequest, request: Request):
                             detail={"error": str(e), "details":e.details})
     
     except Exception:
-        logger.exception("Prediction failes")
+        logger.exception("Prediction failed")
         raise HTTPException(status_code=500, detail="Internal error")
     
     latency_ms = (time.time() - t0) * 1000.0
     logger.info("predict_ok rows=%d latency_ms=%.2f", len(req.records), latency_ms)
 
     return PredictResponse(
-        predidctions=result["predictions"],
+        predictions=result["predictions"],
         drift=result.get("drift"),
         latency_ms=latency_ms,
     )
